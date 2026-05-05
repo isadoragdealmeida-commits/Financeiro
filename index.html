@@ -464,7 +464,7 @@ async function doReset(){
   const{error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:window.location.href});
   if(error) authErr(error.message); else authOk('Email de recuperação enviado!');
 }
-async function doLogout(){ cacheClear(); await sb.auth.signOut(); }
+async function doLogout(){ cacheClear(); await sb.auth.signOut(); window.location.reload(); }
 
 // ══ SESSION ════════════════════════════════════════════════
 sb.auth.onAuthStateChange(async(_,session)=>{
@@ -485,30 +485,30 @@ sb.auth.onAuthStateChange(async(_,session)=>{
 
 // ══ DB HELPERS ═════════════════════════════════════════════
 async function dbGet(table, extra={}){
-  const ck=table+JSON.stringify(extra);
-  if(cacheGet(ck)) return cacheGet(ck);
-  let q=sb.from(table).select('*').eq('user_id',currentUser.id);
-  if(extra.mes) q=q.eq('mes',extra.mes);
-  q=q.order('created_at',{ascending:true});
-  const{data,error}=await q;
-  if(error){console.error(error);return[];}
-  cacheSet(ck,data);
+  const ck = table + (extra.mes || '');
+  if(cache[ck] !== undefined) return cache[ck];
+  let q = sb.from(table).select('*').eq('user_id', currentUser.id);
+  if(extra.mes) q = q.eq('mes', extra.mes);
+  q = q.order('created_at', {ascending: true});
+  const {data, error} = await q;
+  if(error){ console.error(table, error); return []; }
+  cache[ck] = data;
   return data;
 }
-async function dbInsert(table,row){
-  cache={};// clear all cache on write
-  const{data,error}=await sb.from(table).insert({...row,user_id:currentUser.id}).select().single();
-  if(error){console.error(error);return null;}
+async function dbInsert(table, row){
+  cache = {};
+  const {data, error} = await sb.from(table).insert({...row, user_id: currentUser.id}).select().single();
+  if(error){ console.error(error); return null; }
   return data;
 }
-async function dbDelete(table,id){
-  cache={};
-  const{error}=await sb.from(table).delete().eq('id',id).eq('user_id',currentUser.id);
+async function dbDelete(table, id){
+  cache = {};
+  const {error} = await sb.from(table).delete().eq('id', id).eq('user_id', currentUser.id);
   if(error) console.error(error);
 }
-async function dbUpdate(table,id,fields){
-  cache={};
-  const{error}=await sb.from(table).update(fields).eq('id',id).eq('user_id',currentUser.id);
+async function dbUpdate(table, id, fields){
+  cache = {};
+  const {error} = await sb.from(table).update(fields).eq('id', id).eq('user_id', currentUser.id);
   if(error) console.error(error);
 }
 
@@ -688,8 +688,8 @@ function renderProjecao(entradas,recorrentes){
     const isNow=m===NOW_MONTH&&y===NOW_YEAR;
     const recs=recorrentes.filter(r=>recorrenteAtivoEm(r,m,y));
     // despesas avulsas do mês (use cached if available)
-    const despKey='despesas'+JSON.stringify({mes:getMonthKey(m,y)});
-    const desp=cacheGet(despKey)||[];
+    const despKey = 'despesas' + getMonthKey(m, y);
+    const desp = cache[despKey] || [];
     const totalR=recs.reduce((s,r)=>s+Number(r.valor),0);
     const totalD=desp.reduce((s,d)=>s+Number(d.valor),0);
     const saldo=totalE-totalR-totalD;
