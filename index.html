@@ -418,7 +418,7 @@ let currentYear  = new Date().getFullYear();
 const NOW_MONTH  = new Date().getMonth();
 const NOW_YEAR   = new Date().getFullYear();
 function getMonthKey(m=currentMonth,y=currentYear){ return`${y}-${String(m+1).padStart(2,'0')}`; }
-function changeMonth(d){ currentMonth+=d; if(currentMonth>11){currentMonth=0;currentYear++;} if(currentMonth<0){currentMonth=11;currentYear--;} renderAll(); }
+function changeMonth(d){ currentMonth+=d; if(currentMonth>11){currentMonth=0;currentYear++;} if(currentMonth<0){currentMonth=11;currentYear--;} cache={}; _rendering=false; renderAll(); }
 function updateMonthLabel(){ document.getElementById('monthLabel').textContent=`${MONTHS[currentMonth]} ${currentYear}`; }
 
 // ══ AUTH UI ════════════════════════════════════════════════
@@ -549,6 +549,7 @@ function showPage(id,btn){
   document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
   if(btn) btn.classList.add('active');
+  _rendering=false;
   renderAll();
 }
 
@@ -583,31 +584,37 @@ function updateFimPreview(){
 }
 
 // ══ RENDER ALL ═════════════════════════════════════════════
+let _rendering = false;
 async function renderAll(){
   if(!currentUser) return;
+  if(_rendering) return;
+  _rendering = true;
   updateMonthLabel();
-  console.log('renderAll → user:', currentUser.email, '| mês:', getMonthKey());
-  // load all data in parallel
-  const[entradas,despesas,recorrentes,investimentos,metas,categorias]=await Promise.all([
-    dbGet('entradas'),
-    dbGet('despesas',{mes:getMonthKey()}),
-    dbGet('recorrentes'),
-    dbGet('investimentos',{mes:getMonthKey()}),
-    dbGet('metas'),
-    dbGet('categorias'),
-  ]);
-  console.log('dados:', {entradas:entradas.length, despesas:despesas.length, recorrentes:recorrentes.length, categorias:categorias.length});
-  _cats=categorias.length>0?categorias:[...DEFAULT_CATS];
-
-  renderDashboard(entradas,despesas,recorrentes,investimentos);
-  renderEntradas(entradas);
-  renderDespesas(despesas,entradas,recorrentes);
-  renderRecorrentes(recorrentes);
-  renderProjecao(entradas,recorrentes);
-  renderInvestimentos(investimentos);
-  renderMetas(metas);
-  renderCategorias(categorias);
-  buildSelects();
+  try {
+    const [entradas, despesas, recorrentes, investimentos, metas, categorias] = await Promise.all([
+      dbGet('entradas'),
+      dbGet('despesas', {mes: getMonthKey()}),
+      dbGet('recorrentes'),
+      dbGet('investimentos', {mes: getMonthKey()}),
+      dbGet('metas'),
+      dbGet('categorias'),
+    ]);
+    console.log('dados carregados:', {entradas: entradas.length, despesas: despesas.length, recorrentes: recorrentes.length, categorias: categorias.length});
+    _cats = categorias.length > 0 ? categorias : [...DEFAULT_CATS];
+    renderDashboard(entradas, despesas, recorrentes, investimentos);
+    renderEntradas(entradas);
+    renderDespesas(despesas);
+    renderRecorrentes(recorrentes);
+    renderProjecao(entradas, recorrentes);
+    renderInvestimentos(investimentos);
+    renderMetas(metas);
+    renderCategorias(categorias);
+    buildSelects();
+  } catch(e) {
+    console.error('renderAll falhou:', e);
+  } finally {
+    _rendering = false;
+  }
 }
 
 // ══ DASHBOARD ══════════════════════════════════════════════
