@@ -159,6 +159,14 @@
     .sp{display:inline-block;width:14px;height:14px;border:2px solid rgba(0,0,0,0.2);border-top-color:#000;border-radius:50%;animation:spin 0.6s linear infinite;vertical-align:middle;margin-right:5px;}
     @media(max-width:500px){main{padding:1rem;}.cgrid{grid-template-columns:1fr 1fr;}}
   </style>
+  <script>
+    // função de emergência — disponível antes de qualquer coisa
+    function forceLogout(){
+      localStorage.clear();
+      sessionStorage.clear();
+      window.location.reload();
+    }
+  </script>
 </head>
 <body>
 
@@ -370,13 +378,6 @@ const SURL = 'https://uemvlbzfrgryrebojkqj.supabase.co';
 const SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVlbXZsYnpmcmdyeXJlYm9qa3FqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc5MTY1NTcsImV4cCI6MjA5MzQ5MjU1N30.HK0HvVgUvHzhW31cYlulkSQad4XZTr-AckTo2GuygSc';
 window.DB = supabase.createClient(SURL, SKEY);
 const DB = window.DB;
-
-// limpa sessão e vai pro login (acessível pelo console: forceLogout())
-window.forceLogout = function(){
-  localStorage.clear();
-  sessionStorage.clear();
-  window.location.reload();
-};
 
 // ═══════════════════════════════════════════════
 //  STATE
