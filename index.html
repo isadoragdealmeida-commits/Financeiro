@@ -174,8 +174,8 @@
 <div id="loading">
   <div class="load-logo">IsHi<span> Money</span></div>
   <div class="spin"></div>
-  <button id="force-logout-btn" onclick="forceLogout()" style="display:none;margin-top:1rem;background:transparent;border:1px solid var(--border);color:var(--muted);font-family:'Syne',sans-serif;font-size:0.78rem;padding:0.4rem 1rem;border-radius:8px;cursor:pointer;">
-    Travou? Clique aqui
+  <button onclick="forceLogout()" style="margin-top:1.5rem;background:#ff6b6b;color:#fff;font-family:'Syne',sans-serif;font-size:0.85rem;font-weight:700;padding:0.6rem 1.5rem;border-radius:10px;border:none;cursor:pointer;">
+    ⚠ Limpar e entrar novamente
   </button>
 </div>
 
@@ -529,14 +529,6 @@ DB.auth.onAuthStateChange(async (event, session) => {
 });
 
 startApp();
-
-// mostra botão de emergência se travar no loading
-setTimeout(() => {
-  const l = document.getElementById('loading');
-  if(l && l.style.display !== 'none') {
-    document.getElementById('force-logout-btn').style.display = 'block';
-  }
-}, 4000);
 
 // ═══════════════════════════════════════════════
 //  DB
