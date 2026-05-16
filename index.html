@@ -166,6 +166,9 @@
 <div id="loading">
   <div class="load-logo">IsHi<span> Money</span></div>
   <div class="spin"></div>
+  <button id="force-logout-btn" onclick="forceLogout()" style="display:none;margin-top:1rem;background:transparent;border:1px solid var(--border);color:var(--muted);font-family:'Syne',sans-serif;font-size:0.78rem;padding:0.4rem 1rem;border-radius:8px;cursor:pointer;">
+    Travou? Clique aqui
+  </button>
 </div>
 
 <!-- AUTH -->
@@ -365,7 +368,15 @@
 // ═══════════════════════════════════════════════
 const SURL = 'https://uemvlbzfrgryrebojkqj.supabase.co';
 const SKEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVlbXZsYnpmcmdyeXJlYm9qa3FqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc5MTY1NTcsImV4cCI6MjA5MzQ5MjU1N30.HK0HvVgUvHzhW31cYlulkSQad4XZTr-AckTo2GuygSc';
-const DB = supabase.createClient(SURL, SKEY);
+window.DB = supabase.createClient(SURL, SKEY);
+const DB = window.DB;
+
+// limpa sessão e vai pro login (acessível pelo console: forceLogout())
+window.forceLogout = function(){
+  localStorage.clear();
+  sessionStorage.clear();
+  window.location.reload();
+};
 
 // ═══════════════════════════════════════════════
 //  STATE
@@ -517,6 +528,14 @@ DB.auth.onAuthStateChange(async (event, session) => {
 });
 
 startApp();
+
+// mostra botão de emergência se travar no loading
+setTimeout(() => {
+  const l = document.getElementById('loading');
+  if(l && l.style.display !== 'none') {
+    document.getElementById('force-logout-btn').style.display = 'block';
+  }
+}, 4000);
 
 // ═══════════════════════════════════════════════
 //  DB
