@@ -491,7 +491,7 @@ async function dbGet(table, extra={}){
   if(extra.mes) q = q.eq('mes', extra.mes);
   q = q.order('created_at', {ascending: true});
   const {data, error} = await q;
-  if(error){ console.error(table, error); return []; }
+  if(error){ console.error('dbGet error →', table, error.message); return []; }
   cache[ck] = data;
   return data;
 }
@@ -584,7 +584,9 @@ function updateFimPreview(){
 
 // ══ RENDER ALL ═════════════════════════════════════════════
 async function renderAll(){
+  if(!currentUser) return;
   updateMonthLabel();
+  console.log('renderAll → user:', currentUser.email, '| mês:', getMonthKey());
   // load all data in parallel
   const[entradas,despesas,recorrentes,investimentos,metas,categorias]=await Promise.all([
     dbGet('entradas'),
@@ -594,6 +596,7 @@ async function renderAll(){
     dbGet('metas'),
     dbGet('categorias'),
   ]);
+  console.log('dados:', {entradas:entradas.length, despesas:despesas.length, recorrentes:recorrentes.length, categorias:categorias.length});
   _cats=categorias.length>0?categorias:[...DEFAULT_CATS];
 
   renderDashboard(entradas,despesas,recorrentes,investimentos);
