@@ -446,6 +446,9 @@ async function reset(){
 }
 async function logout(){
   await DB.auth.signOut();
+  Object.keys(localStorage).forEach(k => {
+    if(k.startsWith('sb-') || k.includes('supabase')) localStorage.removeItem(k);
+  });
   window.location.reload();
 }
 
@@ -463,10 +466,25 @@ DB.auth.onAuthStateChange(async (event, session) => {
     await load();
   } else {
     USER = null;
+    // limpa qualquer sessão corrompida do localStorage
+    Object.keys(localStorage).forEach(k => {
+      if(k.startsWith('sb-') || k.includes('supabase')) localStorage.removeItem(k);
+    });
     document.getElementById('auth').style.display = 'flex';
     document.getElementById('app').style.display  = 'none';
   }
 });
+
+// segurança extra: se ficar mais de 8s no loading, limpa e mostra login
+setTimeout(() => {
+  if(document.getElementById('loading').style.display !== 'none'){
+    Object.keys(localStorage).forEach(k => {
+      if(k.startsWith('sb-') || k.includes('supabase')) localStorage.removeItem(k);
+    });
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('auth').style.display = 'flex';
+  }
+}, 8000);
 
 // ═══════════════════════════════════════════════
 //  DB
