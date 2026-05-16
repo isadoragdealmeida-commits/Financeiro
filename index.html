@@ -455,9 +455,34 @@ async function logout(){
 // ═══════════════════════════════════════════════
 //  SESSION → arranca o app
 // ═══════════════════════════════════════════════
-DB.auth.onAuthStateChange(async (event, session) => {
+// ═══════════════════════════════════════════════
+//  INIT — checa sessão direto, sem depender de evento
+// ═══════════════════════════════════════════════
+async function startApp(){
+  // limpa chaves antigas/corrompidas do supabase antes de tudo
+  Object.keys(localStorage).forEach(k => {
+    if(k.startsWith('sb-') && k.includes('-auth-token')) {
+      try {
+        const val = JSON.parse(localStorage.getItem(k));
+        // se o token expirou, remove
+        if(val?.expires_at && val.expires_at * 1000 < Date.now()) {
+          localStorage.removeItem(k);
+        }
+      } catch { localStorage.removeItem(k); }
+    }
+  });
+
+  let session = null;
+  try {
+    const { data, error } = await DB.auth.getSession();
+    if(!error) session = data?.session;
+  } catch(e) {
+    console.error('getSession erro:', e);
+  }
+
   document.getElementById('loading').style.display = 'none';
-  if (session && session.user) {
+
+  if(session?.user) {
     USER = session.user;
     document.getElementById('auth').style.display = 'none';
     document.getElementById('app').style.display  = 'block';
@@ -465,26 +490,33 @@ DB.auth.onAuthStateChange(async (event, session) => {
     await ensureCats();
     await load();
   } else {
-    USER = null;
-    // limpa qualquer sessão corrompida do localStorage
+    // limpa tudo e mostra login
     Object.keys(localStorage).forEach(k => {
       if(k.startsWith('sb-') || k.includes('supabase')) localStorage.removeItem(k);
     });
     document.getElementById('auth').style.display = 'flex';
     document.getElementById('app').style.display  = 'none';
   }
+}
+
+// escuta mudanças (login/logout)
+DB.auth.onAuthStateChange(async (event, session) => {
+  if(event === 'SIGNED_IN' && session?.user && !USER) {
+    USER = session.user;
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('auth').style.display = 'none';
+    document.getElementById('app').style.display  = 'block';
+    document.getElementById('upill').textContent  = USER.email;
+    await ensureCats();
+    await load();
+  }
+  if(event === 'SIGNED_OUT') {
+    USER = null;
+    window.location.reload();
+  }
 });
 
-// segurança extra: se ficar mais de 8s no loading, limpa e mostra login
-setTimeout(() => {
-  if(document.getElementById('loading').style.display !== 'none'){
-    Object.keys(localStorage).forEach(k => {
-      if(k.startsWith('sb-') || k.includes('supabase')) localStorage.removeItem(k);
-    });
-    document.getElementById('loading').style.display = 'none';
-    document.getElementById('auth').style.display = 'flex';
-  }
-}, 8000);
+startApp();
 
 // ═══════════════════════════════════════════════
 //  DB
